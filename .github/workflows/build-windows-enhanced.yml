@@ -1,0 +1,80 @@
+name: Build Windows Enhanced
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [ published ]
+
+env:
+  QT_VERSION: "6.5.2"
+
+jobs:
+  build-windows-enhanced:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get git hash
+      id: githash
+      run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Setup Qt6
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ env.QT_VERSION }}
+        arch: x86_64
+        modules: qtcharts qtnetworkauth qtwebengine qtwebview qtlocation qtmultimedia qtquick3d qtscript qtscxml qtsensors qtserialport qtsvg qtsvgwidgets qttools qttranslations qtwebchannel qtwebsockets qtwebview
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DOFAPP_GITHASH=${{ steps.githash.outputs.hash }}
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release --parallel
+
+    - name: Deploy Qt dependencies
+      run: |
+        cd build
+        # Use windeployqt to copy all required Qt dependencies
+        $env:QT_DIR\bin\windeployqt.exe --release --no-compiler-runtime --no-translations --no-system-d3d-compiler Release\OpenFIREapp.exe
+
+    - name: Create Windows package
+      run: |
+        cd build
+        # Create a proper Windows package with all dependencies
+        mkdir OpenFIREapp
+        copy Release\OpenFIREapp.exe OpenFIREapp\
+        copy Release\*.dll OpenFIREapp\
+        if (Test-Path "Release\platforms") { xcopy /E /I Release\platforms OpenFIREapp\platforms }
+        if (Test-Path "Release\styles") { xcopy /E /I Release\styles OpenFIREapp\styles }
+        if (Test-Path "Release\imageformats") { xcopy /E /I Release\imageformats OpenFIREapp\imageformats }
+        if (Test-Path "Release\iconengines") { xcopy /E /I Release\iconengines OpenFIREapp\iconengines }
+        
+        # Create a simple README for Windows users
+        echo "OpenFIRE Configuration App" > OpenFIREapp\README.txt
+        echo "" >> OpenFIREapp\README.txt
+        echo "To run the application:" >> OpenFIREapp\README.txt
+        echo "1. Extract all files to a folder" >> OpenFIREapp\README.txt
+        echo "2. Double-click OpenFIREapp.exe" >> OpenFIREapp\README.txt
+        echo "" >> OpenFIREapp\README.txt
+        echo "Note: Windows 10 or later is required for RP2040 driver support." >> OpenFIREapp\README.txt
+        
+        # Create zip package
+        7z a -tzip OpenFIRE_App-Windows-x86_64-Enhanced.zip OpenFIREapp\
+
+    - name: Upload Windows package
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenFIRE_App-Windows-x86_64-Enhanced
+        path: build/OpenFIRE_App-Windows-x86_64-Enhanced.zip

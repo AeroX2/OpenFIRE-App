@@ -101,7 +101,7 @@ bool AppSerial::GetSettings(const QString &portName)
                     App_Common::board.type = buffer.takeFirst().constData();
                     printf("Board type: %s\n", App_Common::board.type.constData());
 
-                    if(App_Common::board.type.contains("esp32-s3"))
+                    if(App_Common::board.type.contains("esp32"))
                          App_Common::board.arch = App_Common::OFPresets.boardArchs[OF_Const::boardESP32_S3];
                     else App_Common::board.arch = App_Common::OFPresets.boardArchs[OF_Const::boardRP];
 

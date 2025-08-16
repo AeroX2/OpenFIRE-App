@@ -1,0 +1,177 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  QT_VERSION: "6.5.2"
+
+jobs:
+  build-test-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get git hash
+      id: githash
+      run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Setup Qt6
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ env.QT_VERSION }}
+        arch: x86_64
+        modules: qtserialport qtsvg qtsvgwidgets qttools
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgl1-mesa-dev
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DOFAPP_GITHASH=${{ steps.githash.outputs.hash }}
+
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc)
+
+    - name: Test build output
+      run: |
+        cd build
+        # Check if the executable was created
+        if [ ! -f "OpenFIREapp" ]; then
+          echo "Error: OpenFIREapp executable was not created"
+          exit 1
+        fi
+        # Check if it's executable
+        if [ ! -x "OpenFIREapp" ]; then
+          echo "Error: OpenFIREapp is not executable"
+          exit 1
+        fi
+        echo "Build test passed: OpenFIREapp executable created successfully"
+
+  build-test-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get git hash
+      id: githash
+      run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Setup Qt6
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ env.QT_VERSION }}
+        arch: x86_64
+        modules: qtserialport qtsvg qtsvgwidgets qttools
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DOFAPP_GITHASH=${{ steps.githash.outputs.hash }}
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Debug --parallel
+
+    - name: Test build output
+      run: |
+        cd build
+        # Check if the executable was created
+        if (!(Test-Path "Debug\OpenFIREapp.exe")) {
+          echo "Error: OpenFIREapp.exe was not created"
+          exit 1
+        }
+        echo "Build test passed: OpenFIREapp.exe created successfully"
+
+  build-test-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get git hash
+      id: githash
+      run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Setup Qt6
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ env.QT_VERSION }}
+        arch: x86_64
+        modules: qtserialport qtsvg qtsvgwidgets qttools
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DOFAPP_GITHASH=${{ steps.githash.outputs.hash }}
+
+    - name: Build
+      run: |
+        cd build
+        make -j$(sysctl -n hw.ncpu)
+
+    - name: Test build output
+      run: |
+        cd build
+        # Check if the executable was created
+        if [ ! -f "OpenFIREapp" ]; then
+          echo "Error: OpenFIREapp executable was not created"
+          exit 1
+        fi
+        # Check if it's executable
+        if [ ! -x "OpenFIREapp" ]; then
+          echo "Error: OpenFIREapp is not executable"
+          exit 1
+        fi
+        echo "Build test passed: OpenFIREapp executable created successfully"
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check CMake syntax
+      run: |
+        # Test if CMake configuration is valid
+        mkdir test-build
+        cd test-build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug
+        echo "CMake configuration is valid"
+
+    - name: Check for TODO/FIXME comments
+      run: |
+        # Count TODO and FIXME comments in source files
+        TODO_COUNT=$(grep -r "TODO\|FIXME" src/ --include="*.cpp" --include="*.h" | wc -l)
+        echo "Found $TODO_COUNT TODO/FIXME comments in source files"
+        if [ $TODO_COUNT -gt 10 ]; then
+          echo "Warning: High number of TODO/FIXME comments found"
+        fi
+
+    - name: Check file structure
+      run: |
+        # Verify essential files exist
+        required_files=("CMakeLists.txt" "src/main.cpp" "src/appmainwindow.h" "src/appmainwindow.cpp")
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "Error: Required file $file is missing"
+            exit 1
+          fi
+        done
+        echo "All required files present"
