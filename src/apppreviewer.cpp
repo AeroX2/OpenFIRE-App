@@ -117,11 +117,18 @@ void AppBoardsPreviewer::on_boardSelector_currentTextChanged(const QString &arg1
     for(auto &board : App_Common::OFPresets.boardNames) {
         if(!strcmp(board.second, arg1.toLocal8Bit().constData())) {
             if(board.first.find("esp32") != std::string::npos) {
-                ui->subTextLabel->setText("<p>Compatible with the "
-                                          "<a href='https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32'><span style=' text-decoration: underline; color:#8ab4f8;'>ESP-IDF fork of the OpenFIRE Firmware</span></a> by <i>Alessandro Satanassi.</i><br>"
-                                          "Any issues should be reported <b><a href='https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/issues'><span style=' text-decoration: underline; color:#8ab4f8;'>here!</span></a></b></p>");
-                // NOTE: if we get any non-S3 boards, will need to determine if S3 or other arch-type ESP board.
-                boardType = OF_Const::boardESP32_S3;
+                // Determine ESP32 architecture type
+                if(board.first.contains("esp32c6")) {
+                    ui->subTextLabel->setText("<p>Compatible with the "
+                                              "<a href='https://github.com/AeroX2/OpenFIRE-Wireless'><span style=' text-decoration: underline; color:#8ab4f8;'>OpenFIRE Wireless</span></a> by <i>AeroX2.</i><br>"
+                                              "Any issues should be reported <b><a href='https://github.com/AeroX2/OpenFIRE-Wireless/issues'><span style=' text-decoration: underline; color:#8ab4f8;'>here!</span></a></b></p>");
+                    boardType = OF_Const::boardESP32_C6;
+                } else {
+                    ui->subTextLabel->setText("<p>Compatible with the "
+                                              "<a href='https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32'><span style=' text-decoration: underline; color:#8ab4f8;'>ESP-IDF fork of the OpenFIRE Firmware</span></a> by <i>Alessandro Satanassi.</i><br>"
+                                              "Any issues should be reported <b><a href='https://github.com/alessandro-satanassi/OpenFIRE-Firmware-ESP32/issues'><span style=' text-decoration: underline; color:#8ab4f8;'>here!</span></a></b></p>");
+                    boardType = OF_Const::boardESP32_S3;
+                }
             } else {
                 ui->subTextLabel->setText("<p>Compatible with "
                                           "<a href='https://github.com/TeamOpenFIRE/OpenFIRE-Firmware'><span style=' text-decoration: underline; color:#8ab4f8;'>upstream OpenFIRE Firmware</span></a> by <i>Team OpenFIRE.</i></p>");

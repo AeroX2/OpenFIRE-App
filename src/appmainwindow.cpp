@@ -858,14 +858,21 @@ void guiWindow::on_comPortSelector_currentTextChanged(const QString &text)
 
             if(App_Common::board.version.indexOf('-') > -1) {
                 QString orgName;
+                QString repoName;
 
-                if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardRP])
+                if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardRP]) {
                     orgName = "TeamOpenFIRE";
-                else if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardESP32_S3])
+                    repoName = "OpenFIRE-Firmware";
+                } else if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardESP32_S3]) {
                     orgName = "alessandro-satanassi";
+                    repoName = "OpenFIRE-Firmware-ESP32";
+                } else if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardESP32_C6]) {
+                    orgName = "AeroX2";
+                    repoName = "OpenFIRE-Wireless";
+                }
 
-                ui->versionLabel->setText(QString("FW <tt>v%1<a href='https://github.com/%2/OpenFIRE-Firmware/commit/%3'><span style=' text-decoration: underline; color:#8ab4f8;'>%3</span></a></tt>")
-                                                 .arg(App_Common::board.version.left(App_Common::board.version.indexOf('-')+1), orgName, App_Common::board.version.mid(App_Common::board.version.indexOf('-')+1)));
+                ui->versionLabel->setText(QString("FW <tt>v%1<a href='https://github.com/%2/%4/commit/%3'><span style=' text-decoration: underline; color:#8ab4f8;'>%3</span></a></tt>")
+                                                 .arg(App_Common::board.version.left(App_Common::board.version.indexOf('-')+1), orgName, App_Common::board.version.mid(App_Common::board.version.indexOf('-')+1), repoName));
             } else ui->versionLabel->setText("FW <tt>v" + App_Common::board.version + "</tt>");
 
             // update presets box if this board has any
