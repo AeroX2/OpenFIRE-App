@@ -118,7 +118,7 @@ void AppBoardsPreviewer::on_boardSelector_currentTextChanged(const QString &arg1
         if(!strcmp(board.second, arg1.toLocal8Bit().constData())) {
             if(board.first.find("esp32") != std::string::npos) {
                 // Determine ESP32 architecture type
-                if(board.first.contains("esp32c6")) {
+                if(board.first.find("esp32c6") != std::string::npos) {
                     ui->subTextLabel->setText("<p>Compatible with the "
                                               "<a href='https://github.com/AeroX2/OpenFIRE-Wireless'><span style=' text-decoration: underline; color:#8ab4f8;'>OpenFIRE Wireless</span></a> by <i>AeroX2.</i><br>"
                                               "Any issues should be reported <b><a href='https://github.com/AeroX2/OpenFIRE-Wireless/issues'><span style=' text-decoration: underline; color:#8ab4f8;'>here!</span></a></b></p>");
