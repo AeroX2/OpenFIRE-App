@@ -772,6 +772,25 @@ void guiWindow::on_comPortSelector_currentTextChanged(const QString &text)
                 }
             }
 
+            // On the wireless boards the pedal is a separate device, so the dongle applies
+            // the Pedal mapping instead of the gun. It has no way of knowing whether the gun
+            // is currently aiming offscreen, so it always uses the onscreen mapping - don't
+            // offer an offscreen binding that would silently never apply.
+            {
+                const bool pedalOffscreenSupported =
+                    App_Common::board.arch != App_Common::OFPresets.boardArchs[OF_Const::boardESP32_C6];
+
+                for(const int pedalBtn : {OF_Const::btnPedal, OF_Const::btnPedal2}) {
+                    for(int box = 0; box < 2; ++box) {
+                        btnFuncBox[1][box][pedalBtn].setEnabled(pedalOffscreenSupported);
+                        btnFuncBox[1][box][pedalBtn].setFrame(pedalOffscreenSupported);
+                    }
+                    btnFuncBox[1][0][pedalBtn].setToolTip(pedalOffscreenSupported ? QString()
+                        : tr("The wireless dongle applies the pedal mapping and cannot tell when the gun "
+                             "is aiming offscreen, so the onscreen mapping is always used."));
+                }
+            }
+
             // Clears old board layout items
             if(pinBoxes.count()) {
                 for(int i = 0; i < pinBoxes.count(); ++i)
