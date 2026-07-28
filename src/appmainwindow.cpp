@@ -1204,6 +1204,13 @@ void guiWindow::pinBoxes_currentIndexChanged(int index)
     for(int i = 0; i < BUTTON_COUNT-1; ++i)
         btnFuncGBoxes.at(i)->setEnabled(App_Common::inputsMap.value(i) >= 0);
 
+    // The wireless pedal is its own board, so it never occupies a GPIO on the gun and
+    // the check above would leave it permanently greyed out. The gun still stores a
+    // mapping for it, which the dongle reads and applies, so let it be edited.
+    // Alt Pedal stays disabled: the pedal board only reports one switch.
+    if(App_Common::board.arch == App_Common::OFPresets.boardArchs[OF_Const::boardESP32_C6])
+        btnFuncGBoxes.at(OF_Const::btnPedal)->setEnabled(true);
+
     DiffUpdate();
 }
 
